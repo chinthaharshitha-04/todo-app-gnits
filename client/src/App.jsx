@@ -11,6 +11,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const todosPerPage = 5;
+
   // Shows an error in the banner (and logs it in the console)
   function showError(err) {
     console.error(err);
@@ -51,9 +55,10 @@ function App() {
     try {
       setError("");
       const updated = await updateTodo(id, data);
-      // TODO: Complete this. Update the `todos` state so the edited todo is
-      // replaced with `updated` (keep every other todo as it is).
-      setTodos((prev) => prev.map((todo) => (todo._id === id ? updated : todo)));
+
+      setTodos((prev) =>
+        prev.map((todo) => (todo._id === id ? updated : todo))
+      );
     } catch (err) {
       showError(err);
     }
@@ -89,6 +94,16 @@ function App() {
   // Only the todos that match the selected filter
   const filteredTodos = todos.filter(FILTERS[filter].test);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredTodos.length / todosPerPage);
+
+  const startIndex = (currentPage - 1) * todosPerPage;
+
+  const currentTodos = filteredTodos.slice(
+    startIndex,
+    startIndex + todosPerPage
+  );
+
   // "1 task" or "3 tasks"
   const taskWord = filteredTodos.length === 1 ? "task" : "tasks";
 
@@ -100,6 +115,7 @@ function App() {
 
     if (filteredTodos.length === 0) {
       let message = "You're all caught up. Add a task above.";
+
       if (filter === "done") {
         message = "Nothing completed yet";
       }
@@ -114,7 +130,7 @@ function App() {
 
     return (
       <ul className="todo-list">
-        {filteredTodos.map((todo) => (
+        {currentTodos.map((todo) => (
           <TodoItem
             key={todo._id}
             todo={todo}
@@ -138,6 +154,7 @@ function App() {
       <main className="panel content">
         <header className="content-header">
           <h2>{FILTERS[filter].label}</h2>
+
           <span className="content-count">
             {filteredTodos.length} {taskWord}
           </span>
@@ -148,13 +165,40 @@ function App() {
         {error && (
           <div className="error" role="alert">
             <span>{error}</span>
-            <button onClick={() => setError("")} aria-label="Dismiss">
+
+            <button
+              onClick={() => setError("")}
+              aria-label="Dismiss"
+            >
               ×
             </button>
           </div>
         )}
 
         {renderTodos()}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
